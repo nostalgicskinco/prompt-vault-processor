@@ -1,6 +1,6 @@
-# Binaries
-otelcol-promptvault
-promptvaultctl
+# Binaries (root-level only)
+/otelcol-promptvault
+/promptvaultctl
 *.exe
 *.dll
 *.so
