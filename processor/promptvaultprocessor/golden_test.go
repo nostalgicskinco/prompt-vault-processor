@@ -288,11 +288,7 @@ func TestGoldenVault_NoContentInFilesystem(t *testing.T) {
 	}
 }
 
-// TestGoldenVault_SpanEvents verifies event processing doesn't crash.
-// NOTE: The filesystem backend has a known limitation where event attribute
-// storage fails silently because processSpanEvents builds a nested eventKey
-// (spanID/event_N/attrKey) creating a path deeper than MkdirAll covers.
-// This test documents that the processor handles the failure gracefully.
+// TestGoldenVault_SpanEvents verifies event attributes are offloaded to vault.
 func TestGoldenVault_SpanEvents(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := &Config{
@@ -327,17 +323,25 @@ func TestGoldenVault_SpanEvents(t *testing.T) {
 	evt.SetName("gen_ai.prompt")
 	evt.Attributes().PutStr("gen_ai.prompt", "A long prompt that should be vaulted from the event attributes")
 
-	// ConsumeTraces should NOT error even if event offload fails internally.
 	if err := p.ConsumeTraces(context.Background(), td); err != nil {
-		t.Fatalf("ConsumeTraces should not fail: %v", err)
+		t.Fatalf("ConsumeTraces: %v", err)
 	}
 
-	// Verify event still exists and processor didn't crash.
+	// Event attribute should now be a vault reference.
 	outEvent := sink.AllTraces()[0].ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0).Events().At(0)
-	_, ok := outEvent.Attributes().Get("gen_ai.prompt")
+	val, ok := outEvent.Attributes().Get("gen_ai.prompt")
 	if !ok {
-		t.Fatal("expected gen_ai.prompt event attribute to still exist")
+		t.Fatal("expected gen_ai.prompt event attribute")
 	}
-	// TODO(fix): filesystem backend MkdirAll doesn't cover nested event keys.
-	// Once fixed, assert the attribute value is a vault reference JSON.
+
+	var ref storage.Reference
+	if err := json.Unmarshal([]byte(val.Str()), &ref); err != nil {
+		t.Fatalf("event attribute should be vault ref JSON, got: %s", val.Str())
+	}
+	if ref.URI == "" {
+		t.Error("event vault ref URI is empty")
+	}
+	if ref.Checksum == "" {
+		t.Error("event vault ref checksum is empty")
+	}
 }

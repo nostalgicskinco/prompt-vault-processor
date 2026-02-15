@@ -26,16 +26,19 @@ func NewFilesystemBackend(basePath string) (*FilesystemBackend, error) {
 }
 
 // Store writes data to the filesystem keyed by trace/span/attr.
+// attrKey may contain path separators (e.g. for event attributes:
+// "spanID/event_0/gen_ai.prompt"), so we ensure all intermediate
+// directories exist before writing.
 func (f *FilesystemBackend) Store(_ context.Context, traceID, spanID, attrKey string, data []byte) (Reference, error) {
-	dir := filepath.Join(f.basePath, traceID, spanID)
-	if err := os.MkdirAll(dir, 0750); err != nil {
+	filePath := filepath.Join(f.basePath, traceID, spanID, attrKey)
+	fileDir := filepath.Dir(filePath)
+	if err := os.MkdirAll(fileDir, 0750); err != nil {
 		return Reference{}, fmt.Errorf("failed to create object directory: %w", err)
 	}
 
 	hash := sha256.Sum256(data)
 	checksum := hex.EncodeToString(hash[:])
 
-	filePath := filepath.Join(dir, attrKey)
 	if err := os.WriteFile(filePath, data, 0640); err != nil {
 		return Reference{}, fmt.Errorf("failed to write vault object: %w", err)
 	}
