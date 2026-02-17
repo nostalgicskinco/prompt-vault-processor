@@ -1,0 +1,6 @@
+bin/
+build/
+*.exe
+*.test
+*.out
+vault-data/
