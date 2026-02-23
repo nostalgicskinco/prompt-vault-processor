@@ -1,4 +1,4 @@
-module github.com/nostalgicskinco/prompt-vault-processor
+module github.com/airblackbox/otel-prompt-vault
 
 go 1.22
 
