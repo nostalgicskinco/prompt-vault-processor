@@ -1,5 +1,10 @@
 # prompt-vault-processor
 
+[![CI](https://github.com/airblackbox/otel-prompt-vault/actions/workflows/ci.yml/badge.svg)](https://github.com/airblackbox/otel-prompt-vault/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/airblackbox/otel-prompt-vault/blob/main/LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8.svg?logo=go&logoColor=white)](https://golang.org)
+
+
 An OpenTelemetry Collector processor that offloads LLM prompt and completion content to a secure vault, replacing sensitive data in traces with vault references.
 
 ## Why
